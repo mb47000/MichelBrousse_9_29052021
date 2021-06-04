@@ -38,6 +38,8 @@ export default class NewBill {
          e.target.classList.contains("is-invalid")
        } 
     } else {
+      this.fileName = null;
+      this.fileUrl = null;
       e.target.classList.add("is-invalid");
       e.target.classList.remove("blue-border");
     }
