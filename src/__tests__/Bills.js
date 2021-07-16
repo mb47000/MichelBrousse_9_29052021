@@ -2,7 +2,40 @@ import { screen } from "@testing-library/dom";
 import BillsUI from "../views/BillsUI.js";
 import { bills } from "../fixtures/bills.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
+import Bill from "../containers/Bills.js";
+import Firestore from "../app/Firestore.js";
+import {ROUTES} from "../constants/routes.js";
+import userEvent from '@testing-library/user-event'
 
+// Container
+describe("Given I am connected as an employee", () => {
+  describe("When i click on new bill", () => {
+    test("Then i should go on the new bill form page", () => {
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+      }
+
+      const html = BillsUI({ data: bills });
+      document.body.innerHTML = html;
+
+      const billContainer = new Bill({ document, onNavigate, Firestore, localStorage: window.localStorage});
+
+      const formTriggered = jest.fn(billContainer.handleClickNewBill);
+
+      const buttonNewBill = screen.getByTestId("btn-new-bill");
+
+      buttonNewBill.addEventListener("click", formTriggered);
+
+      userEvent.click(buttonNewBill);
+
+      expect(formTriggered).toHaveBeenCalled();
+      expect(screen.getByTestId("form-new-bill")).toBeTruthy();
+    })
+  })
+});
+
+// UI
+// TODO regarder le github de Kevin pour l'incone vertical (router.js l-82);
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
     test("Then bill icon in vertical layout should be highlighted", () => {
@@ -42,12 +75,12 @@ describe("Given I am connected as an employee", () => {
   });
 
   describe("When I am on Bills page but it is loading", () => {
-		test("Then I should land on a loading page", () => {
-			const html = BillsUI({ data: [], loading: true });
-			document.body.innerHTML = html;
-			expect(screen.getAllByText("Loading...")).toBeTruthy();
-		});
-	});
+    test("Then I should land on a loading page", () => {
+      const html = BillsUI({ data: [], loading: true });
+      document.body.innerHTML = html;
+      expect(screen.getAllByText("Loading...")).toBeTruthy();
+    });
+  });
 
   describe("WHEN i am on Bills page but an error message has been thrown", () => {
     test("THEN Error page should be rendrered", () => {
