@@ -32,10 +32,52 @@ describe("Given I am connected as an employee", () => {
       expect(screen.getByTestId("form-new-bill")).toBeTruthy();
     })
   })
+
+  describe("WHEN I am on Bills page and I click on an icon eye", () => {
+    test("THEN a modal should open", () => {
+      Object.defineProperty(window, "localStorage", {
+        value: localStorageMock,
+      });
+      window.localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+        })
+      );
+
+      document.body.innerHTML = BillsUI({ data: bills });
+
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+      };
+
+      const firestore = null;
+
+      const billsContainer = new Bill({
+        document,
+        onNavigate,
+        firestore,
+        localStorage: window.localStorage,
+      });
+
+      const iconEye = screen.getByTestId("icon-eye");
+      const handleClickIconEye = jest.fn(
+        billsContainer.handleClickIconEye(iconEye)
+      );
+      iconEye.addEventListener("click", handleClickIconEye);
+      userEvent.click(iconEye);
+
+      expect(handleClickIconEye).toHaveBeenCalled();
+
+      const modale = screen.getByTestId("modaleFile");
+
+      expect(modale).toBeTruthy();
+    });
+  });
 });
 
 // UI
-// TODO regarder le github de Kevin pour l'incone vertical (router.js l-82);
+// TODO regarder le github de Kevin pour l'icone vertical (router.js l-82);
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
     test("Then bill icon in vertical layout should be highlighted", () => {
