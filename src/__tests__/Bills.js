@@ -4,8 +4,12 @@ import { bills } from "../fixtures/bills.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
 import Bill from "../containers/Bills.js";
 import Firestore from "../app/Firestore.js";
-import {ROUTES} from "../constants/routes.js";
+import { ROUTES } from "../constants/routes.js";
 import userEvent from '@testing-library/user-event'
+import firebase from "../__mocks__/firebase";
+
+
+
 
 // Container
 describe("Given I am connected as an employee", () => {
@@ -18,7 +22,7 @@ describe("Given I am connected as an employee", () => {
       const html = BillsUI({ data: bills });
       document.body.innerHTML = html;
 
-      const billContainer = new Bill({ document, onNavigate, Firestore, localStorage: window.localStorage});
+      const billContainer = new Bill({ document, onNavigate, Firestore, localStorage: window.localStorage });
 
       const formTriggered = jest.fn(billContainer.handleClickNewBill);
 
@@ -47,6 +51,12 @@ describe("Given I am connected as an employee", () => {
 
       document.body.innerHTML = BillsUI({ data: bills });
 
+      const handleModal = () => {
+        let container = document.querySelector('#modaleFile');
+        container.classList.add('show');
+      }
+      $.fn.modal = jest.fn(handleModal);
+
       const onNavigate = (pathname) => {
         document.body.innerHTML = ROUTES({ pathname });
       };
@@ -60,18 +70,19 @@ describe("Given I am connected as an employee", () => {
         localStorage: window.localStorage,
       });
 
-      const iconEye = screen.getByTestId("icon-eye");
-      const handleClickIconEye = jest.fn(
-        billsContainer.handleClickIconEye(iconEye)
-      );
-      iconEye.addEventListener("click", handleClickIconEye);
+      const container = document.querySelector('#modaleFile');
+      const iconEye = screen.getAllByTestId("icon-eye")[0];
+
       userEvent.click(iconEye);
 
-      expect(handleClickIconEye).toHaveBeenCalled();
+      expect($.fn.modal).toBeCalled();
 
-      const modale = screen.getByTestId("modaleFile");
+      expect($.fn.modal).toHaveBeenCalled();
+
+      const modale = container.classList.contains('show');
 
       expect(modale).toBeTruthy();
+
     });
   });
 });
@@ -130,6 +141,45 @@ describe("Given I am connected as an employee", () => {
       document.body.innerHTML = html;
 
       expect(screen.getAllByText("Erreur")).toBeTruthy();
+    });
+  });
+});
+
+describe("GIVEN I am a user connected as Emplyee", () => {
+  describe("WHEN I navigate to Bills page", () => {
+    test("THEN it fetches bills from mock API GET", async () => {
+      const getSpy = jest.spyOn(firebase, "get");
+      const bills = await firebase.get();
+
+      expect(getSpy).toHaveBeenCalledTimes(1);
+
+      expect(bills.data.length).toBe(4);
+    });
+
+    test("THEN it fetches from an API and fails with 404 error message", async () => {
+      firebase.get.mockImplementationOnce(() => {
+        Promise.reject(new Error("Erreur 404"));
+      });
+
+      const html = BillsUI({ error: "Erreur 404" });
+      document.body.innerHTML = html;
+
+      const message = screen.getByText(/Erreur 404/);
+
+      expect(message).toBeTruthy();
+    });
+
+    test("THEN it fetches from an API and fails with 500 error message", async () => {
+      firebase.get.mockImplementationOnce(() => {
+        Promise.reject(new Error("Erreur 500"));
+      });
+
+      const html = BillsUI({ error: "Erreur 500" });
+      document.body.innerHTML = html;
+
+      const message = screen.getByText(/Erreur 500/);
+
+      expect(message).toBeTruthy();
     });
   });
 });

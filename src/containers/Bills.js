@@ -24,7 +24,9 @@ export default class {
     const billUrl = icon.getAttribute("data-bill-url")
     const imgWidth = Math.floor($('#modaleFile').width() * 0.5)
     $('#modaleFile').find(".modal-body").html(`<div style='text-align: center;'><img width=${imgWidth} src=${billUrl} /></div>`)
+    
     $('#modaleFile').modal('show')
+
   }
 
   // not need to cover this function by tests
@@ -33,33 +35,33 @@ export default class {
       JSON.parse(localStorage.getItem('user')).email : ""
     if (this.firestore) {
       return this.firestore
-      .bills()
-      .get()
-      .then(snapshot => {
-        const bills = snapshot.docs
-          .map(doc => {
-            try {
-              return {
-                ...doc.data(),
-                date: formatDate(doc.data().date),
-                status: formatStatus(doc.data().status)
+        .bills()
+        .get()
+        .then(snapshot => {
+          const bills = snapshot.docs
+            .map(doc => {
+              try {
+                return {
+                  ...doc.data(),
+                  date: formatDate(doc.data().date),
+                  status: formatStatus(doc.data().status)
+                }
+              } catch (e) {
+                // if for some reason, corrupted data was introduced, we manage here failing formatDate function
+                // log the error and return unformatted date in that case
+                console.log(e, 'for', doc.data())
+                return {
+                  ...doc.data(),
+                  date: doc.data().date,
+                  status: formatStatus(doc.data().status)
+                }
               }
-            } catch(e) {
-              // if for some reason, corrupted data was introduced, we manage here failing formatDate function
-              // log the error and return unformatted date in that case
-              console.log(e,'for',doc.data())
-              return {
-                ...doc.data(),
-                date: doc.data().date,
-                status: formatStatus(doc.data().status)
-              }
-            }
-          })
-          .filter(bill => bill.email === userEmail)
+            })
+            .filter(bill => bill.email === userEmail)
           console.log('length', bills.length)
-        return bills
-      })
-      .catch(error => error)
+          return bills
+        })
+        .catch(error => error)
     }
   }
 }
